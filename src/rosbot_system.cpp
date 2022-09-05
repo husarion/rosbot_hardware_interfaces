@@ -41,17 +41,15 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
 
     if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"),
-                   "Joint '%s' have '%s' as first state interface. '%s' expected.", joint.name.c_str(),
-                   joint.state_interfaces[0].name.c_str(), hardware_interface::HW_IF_POSITION);
+      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' have '%s' as first state interface. '%s' expected.",
+                   joint.name.c_str(), joint.state_interfaces[0].name.c_str(), hardware_interface::HW_IF_POSITION);
       return CallbackReturn::ERROR;
     }
 
     if (joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"),
-                   "Joint '%s' have '%s' as second state interface. '%s' expected.", joint.name.c_str(),
-                   joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
+      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' have '%s' as second state interface. '%s' expected.",
+                   joint.name.c_str(), joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
       return CallbackReturn::ERROR;
     }
   }
@@ -61,10 +59,11 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
   try
   {
     node_->declare_parameter<double>("wheel_radius");
+    node_->declare_parameter<std::vector<std::string>>("velocity_command_joint_order");
   }
   catch (rclcpp::exceptions::UninitializedStaticallyTypedParameterException& e)
   {
-    RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Required parameter wheel_radius missing");
+    RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Required parameter missing: %s", e.what());
     return CallbackReturn::ERROR;
   }
 
@@ -110,9 +109,9 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring...");
 
-  motor_command_publisher_ = node_->create_publisher<JointState>("~/motors_cmd", rclcpp::SystemDefaultsQoS());
+  motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SystemDefaultsQoS());
   realtime_motor_command_publisher_ =
-      std::make_shared<realtime_tools::RealtimePublisher<JointState>>(motor_command_publisher_);
+      std::make_shared<realtime_tools::RealtimePublisher<Float32MultiArray>>(motor_command_publisher_);
 
   motor_state_subscriber_ =
       node_->create_subscription<JointState>("~/motors_response", rclcpp::SensorDataQoS(),
@@ -125,6 +124,7 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
       std::make_unique<std::thread>(std::bind(&rclcpp::executors::MultiThreadedExecutor::spin, &executor_));
 
   node_->get_parameter("wheel_radius", wheel_radius_);
+  node_->get_parameter("velocity_command_joint_order", velocity_command_joint_order_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -223,15 +223,13 @@ return_type RosbotSystem::write(const rclcpp::Time&, const rclcpp::Duration&)
   if (realtime_motor_command_publisher_->trylock())
   {
     auto& motor_command = realtime_motor_command_publisher_->msg_;
-    motor_command.name.clear();
-    motor_command.velocity.clear();
+    motor_command.data.clear();
 
     RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Wrtiting motors cmd message");
 
-    for (auto const& v : vel_commands_)
+    for (auto const& joint : velocity_command_joint_order_)
     {
-      motor_command.name.push_back(v.first);
-      motor_command.velocity.push_back(v.second);
+      motor_command.data.push_back(vel_commands_[joint]);
     }
 
     realtime_motor_command_publisher_->unlockAndPublish();

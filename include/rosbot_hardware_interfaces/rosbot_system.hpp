@@ -15,6 +15,7 @@
 #include "realtime_tools/realtime_buffer.h"
 #include "realtime_tools/realtime_publisher.h"
 
+#include "std_msgs/msg/float32_multi_array.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
 namespace rosbot_hardware_interfaces
@@ -25,6 +26,7 @@ using StateInterface = hardware_interface::StateInterface;
 using CommandInterface = hardware_interface::CommandInterface;
 
 using JointState = sensor_msgs::msg::JointState;
+using Float32MultiArray = std_msgs::msg::Float32MultiArray;
 
 class RosbotSystem : public hardware_interface::SystemInterface
 {
@@ -67,9 +69,9 @@ public:
 protected:
   realtime_tools::RealtimeBox<std::shared_ptr<JointState>> received_motor_state_msg_ptr_{ nullptr };
 
-  std::shared_ptr<rclcpp::Publisher<JointState>> motor_command_publisher_ = nullptr;
+  std::shared_ptr<rclcpp::Publisher<Float32MultiArray>> motor_command_publisher_ = nullptr;
 
-  std::shared_ptr<realtime_tools::RealtimePublisher<JointState>> realtime_motor_command_publisher_ = nullptr;
+  std::shared_ptr<realtime_tools::RealtimePublisher<Float32MultiArray>> realtime_motor_command_publisher_ = nullptr;
 
   rclcpp::Subscription<JointState>::SharedPtr motor_state_subscriber_ = nullptr;
 
@@ -86,6 +88,7 @@ protected:
   std::unique_ptr<std::thread> executor_thread_;
 
   double wheel_radius_;
+  std::vector<std::string> velocity_command_joint_order_;
 };
 
 }  // namespace rosbot_hardware_interfaces
