@@ -17,14 +17,14 @@ Rosbots contain [micro-ros](https://micro.ros.org/) firmware which provides the 
 # Usage
 1. Add this repository to ros2 workspace
 ```bash
-    cd src/
-    git clone https://github.com/husarion/rosbot_hardware_interfaces
+cd src/
+git clone https://github.com/husarion/rosbot_hardware_interfaces
 ```
 
 2. Add to the Rosbot description following lines:
 ```xml
-  <xacro:include filename="$(find rosbot_hardware_interfaces)/urdf/ros2_control.urdf.xacro" />
-  <xacro:ros2_control_system/>
+<xacro:include filename="$(find rosbot_hardware_interfaces)/urdf/ros2_control.urdf.xacro" />
+<xacro:ros2_control_system/>
 ```
 
 3. Configure and launch the controller with the example usage.
