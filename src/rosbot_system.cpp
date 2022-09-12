@@ -109,7 +109,7 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring...");
 
-  motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SystemDefaultsQoS());
+  motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SensorDataQoS());
   realtime_motor_command_publisher_ =
       std::make_shared<realtime_tools::RealtimePublisher<Float32MultiArray>>(motor_command_publisher_);
 
