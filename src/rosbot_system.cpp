@@ -193,7 +193,7 @@ return_type RosbotSystem::read(const rclcpp::Time&, const rclcpp::Duration&)
 
   if (!motor_state)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't yet received");
+    RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
     // returning ERROR causes controller to freeze
     return return_type::OK;
   }
