@@ -89,7 +89,7 @@ return_type RosbotImuSensor::read(const rclcpp::Time&, const rclcpp::Duration&)
 
   if (!imu_msg)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("RosbotImuSensor"), "Imu message wasn't yet received");
+    RCLCPP_ERROR(rclcpp::get_logger("RosbotImuSensor"), "Imu message wasn't received yet");
     // returning ERROR causes controller to freeze
     return return_type::OK;
   }
