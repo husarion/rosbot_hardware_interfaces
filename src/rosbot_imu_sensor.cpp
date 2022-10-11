@@ -52,8 +52,14 @@ CallbackReturn RosbotImuSensor::on_configure(const rclcpp_lifecycle::State&)
 }
 
 CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
-// method where hardware “power” is enabled.
 {
+  // method where hardware “power” is enabled.
+  
+  for (auto& x : imu_sensor_state_)
+  {
+    x = 0.0;
+  }
+
   subscriber_is_active_ = true;
 
   RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
