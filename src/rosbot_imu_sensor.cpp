@@ -20,6 +20,9 @@ CallbackReturn RosbotImuSensor::on_init(const hardware_interface::HardwareInfo& 
 
   node_ = std::make_shared<rclcpp::Node>("imu_sensor_node");
 
+  connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
+  connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -54,16 +57,25 @@ CallbackReturn RosbotImuSensor::on_configure(const rclcpp_lifecycle::State&)
 CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 {
   // method where hardware “power” is enabled.
-  
-  for (auto& x : imu_sensor_state_)
-  {
-    x = 0.0;
-  }
 
   subscriber_is_active_ = true;
 
-  RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
-  return CallbackReturn::SUCCESS;
+  std::shared_ptr<Imu> imu_msg;
+  for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Feedback message from imu wasn't received yet");
+    received_imu_msg_ptr_.get(imu_msg);
+    if (imu_msg)
+    {
+      RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
+      return CallbackReturn::SUCCESS;
+    }
+
+    rclcpp::sleep_for(std::chrono::milliseconds(connection_check_period_ms_));
+  }
+
+  RCLCPP_FATAL(node_->get_logger(), "Activation failed, timeout reached while waiting for feedback from imu");
+  return CallbackReturn::ERROR;
 }
 
 CallbackReturn RosbotImuSensor::on_deactivate(const rclcpp_lifecycle::State&)

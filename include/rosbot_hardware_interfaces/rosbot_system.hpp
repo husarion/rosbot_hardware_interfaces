@@ -89,6 +89,9 @@ protected:
 
   double wheel_radius_;
   std::vector<std::string> velocity_command_joint_order_;
+
+  uint connection_check_period_ms_;
+  uint connection_timeout_ms_;
 };
 
 }  // namespace rosbot_hardware_interfaces
