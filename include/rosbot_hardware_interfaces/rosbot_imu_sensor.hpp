@@ -63,6 +63,9 @@ protected:
   void imu_cb(const std::shared_ptr<Imu> msg);
   rclcpp::executors::MultiThreadedExecutor executor_;
   std::unique_ptr<std::thread> executor_thread_;
+
+  uint connection_check_period_ms_;
+  uint connection_timeout_ms_;
 };
 
 }  // namespace rosbot_hardware_interfaces

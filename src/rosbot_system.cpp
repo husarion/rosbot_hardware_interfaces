@@ -76,6 +76,9 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
     vel_commands_[j.name] = std::numeric_limits<double>::quiet_NaN();
   }
 
+  connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
+  connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -146,17 +149,24 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 {
   // method where hardware “power” is enabled.
 
-  for (auto& j : info_.joints)
-  {
-    pos_state_[j.name] = 0.0;
-    vel_state_[j.name] = 0.0;
-    vel_commands_[j.name] = 0.0;
-  }
-
   subscriber_is_active_ = true;
 
-  RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
-  return CallbackReturn::SUCCESS;
+  std::shared_ptr<JointState> motor_state;
+  for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
+    received_motor_state_msg_ptr_.get(motor_state);
+    if (motor_state)
+    {
+      RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
+      return CallbackReturn::SUCCESS;
+    }
+
+    rclcpp::sleep_for(std::chrono::milliseconds(connection_check_period_ms_));
+  }
+
+  RCLCPP_FATAL(node_->get_logger(), "Activation failed, timeout reached while waiting for feedback from motors");
+  return CallbackReturn::ERROR;
 }
 
 CallbackReturn RosbotSystem::on_deactivate(const rclcpp_lifecycle::State&)

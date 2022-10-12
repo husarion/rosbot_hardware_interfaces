@@ -4,6 +4,8 @@
         <ros2_control name="imu" type="sensor">
             <hardware>
                 <plugin>rosbot_hardware_interfaces/RosbotImuSensor</plugin>
+                <param name="connection_timeout_ms">120000</param>
+                <param name="connection_check_period_ms">500</param>
             </hardware>
             <sensor name="imu">
                 <state_interface name="orientation.x" />
@@ -22,6 +24,8 @@
         <ros2_control name="wheels" type="system">
             <hardware>
                 <plugin>rosbot_hardware_interfaces/RosbotSystem</plugin>
+                <param name="connection_timeout_ms">120000</param>
+                <param name="connection_check_period_ms">500</param>
             </hardware>
 
             <joint name="front_left_wheel_joint">
