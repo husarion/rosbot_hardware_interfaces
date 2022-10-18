@@ -18,48 +18,37 @@ CallbackReturn RosbotImuSensor::on_init(const hardware_interface::HardwareInfo& 
 
   imu_sensor_state_.resize(info_.sensors[0].state_interfaces.size(), std::numeric_limits<double>::quiet_NaN());
 
-  node_ = std::make_shared<rclcpp::Node>("imu_sensor_node");
-
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
   connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
 
   return CallbackReturn::SUCCESS;
 }
 
-std::vector<StateInterface> RosbotImuSensor::export_state_interfaces()
-{
-  std::vector<StateInterface> state_interfaces;
-  for (auto i = 0u; i < info_.sensors[0].state_interfaces.size(); i++)
-  {
-    state_interfaces.emplace_back(
-        StateInterface(info_.sensors[0].name, info_.sensors[0].state_interfaces[i].name, &imu_sensor_state_[i]));
-  }
-
-  return state_interfaces;
-}
-
 CallbackReturn RosbotImuSensor::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Configuring...");
 
+  node_ = std::make_shared<rclcpp::Node>("imu_sensor_node");
+
   imu_subscriber_ = node_->create_subscription<Imu>("~/imu", rclcpp::SensorDataQoS(),
                                                     std::bind(&RosbotImuSensor::imu_cb, this, std::placeholders::_1));
-
-  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Successfully configured");
 
   executor_.add_node(node_);
   executor_thread_ =
       std::make_unique<std::thread>(std::bind(&rclcpp::executors::MultiThreadedExecutor::spin, &executor_));
 
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Successfully configured");
+  return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn RosbotImuSensor::on_cleanup(const rclcpp_lifecycle::State&)
+{
+  cleanup_node();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 {
-  // method where hardware “power” is enabled.
-
-  subscriber_is_active_ = true;
-
   std::shared_ptr<Imu> imu_msg;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
@@ -80,21 +69,44 @@ CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotImuSensor::on_deactivate(const rclcpp_lifecycle::State&)
 {
-  // method, which does the opposite of on_activate.
-  subscriber_is_active_ = false;
   return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn RosbotImuSensor::on_shutdown(const rclcpp_lifecycle::State&)
+{
+  cleanup_node();
+  return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn RosbotImuSensor::on_error(const rclcpp_lifecycle::State&)
+{
+  cleanup_node();
+  return CallbackReturn::SUCCESS;
+}
+
+std::vector<StateInterface> RosbotImuSensor::export_state_interfaces()
+{
+  std::vector<StateInterface> state_interfaces;
+  for (auto i = 0u; i < info_.sensors[0].state_interfaces.size(); i++)
+  {
+    state_interfaces.emplace_back(
+        StateInterface(info_.sensors[0].name, info_.sensors[0].state_interfaces[i].name, &imu_sensor_state_[i]));
+  }
+
+  return state_interfaces;
+}
+
+void RosbotImuSensor::cleanup_node()
+{
+  executor_thread_.reset();
+  executor_.remove_node(node_);
+  imu_subscriber_.reset();
+  node_.reset();
 }
 
 void RosbotImuSensor::imu_cb(const std::shared_ptr<Imu> msg)
 {
   RCLCPP_DEBUG(node_->get_logger(), "Received imu message");
-
-  if (!subscriber_is_active_)
-  {
-    RCLCPP_WARN(node_->get_logger(), "Can't accept new messages, subscriber is inactive");
-    return;
-  }
-
   received_imu_msg_ptr_.set(std::move(msg));
 }
 
@@ -107,9 +119,8 @@ return_type RosbotImuSensor::read(const rclcpp::Time&, const rclcpp::Duration&)
 
   if (!imu_msg)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("RosbotImuSensor"), "Imu message wasn't received yet");
-    // returning ERROR causes controller to freeze
-    return return_type::OK;
+    RCLCPP_ERROR(rclcpp::get_logger("RosbotImuSensor"), "Imu message wasn't received");
+    return return_type::ERROR;
   }
 
   imu_sensor_state_[0] = imu_msg->orientation.x;
