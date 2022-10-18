@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "rclcpp/logging.hpp"
 
@@ -65,6 +66,37 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
 
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
   connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
+  wheel_radius_ = std::stod(info_.hardware_parameters["wheel_radius"]);
+
+  std::string velocity_command_joint_order_raw = info_.hardware_parameters["velocity_command_joint_order"];
+  // remove whitespaces
+  velocity_command_joint_order_raw.erase(
+      std::remove_if(velocity_command_joint_order_raw.begin(), velocity_command_joint_order_raw.end(),
+                     [](char c) { return std::isspace(static_cast<unsigned char>(c)); }),
+      velocity_command_joint_order_raw.end());
+  std::stringstream velocity_command_joint_order_stream(velocity_command_joint_order_raw);
+  std::string joint_name;
+  while (getline(velocity_command_joint_order_stream, joint_name, ','))
+  {
+    velocity_command_joint_order_.push_back(joint_name);
+  }
+
+  if (velocity_command_joint_order_.size() != info_.joints.size())
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint order size is invalid");
+    return CallbackReturn::ERROR;
+  }
+
+  for (auto& j : info_.joints)
+  {
+    if (std::find(velocity_command_joint_order_.begin(), velocity_command_joint_order_.end(), j.name) ==
+        velocity_command_joint_order_.end())
+    {
+      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' missing from velocity command joint order",
+                   j.name.c_str());
+      return CallbackReturn::ERROR;
+    }
+  }
 
   return CallbackReturn::SUCCESS;
 }
@@ -73,21 +105,7 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring...");
 
-  node_ = std::make_shared<rclcpp::Node>("hardware_node");
-
-  try
-  {
-    node_->declare_parameter<double>("wheel_radius");
-    node_->declare_parameter<std::vector<std::string>>("velocity_command_joint_order");
-  }
-  catch (rclcpp::exceptions::UninitializedStaticallyTypedParameterException& e)
-  {
-    RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Required parameter missing: %s", e.what());
-    return CallbackReturn::ERROR;
-  }
-
-  node_->get_parameter("wheel_radius", wheel_radius_);
-  node_->get_parameter("velocity_command_joint_order", velocity_command_joint_order_);
+  node_ = std::make_shared<rclcpp::Node>("rosbot_system_node");
 
   motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SensorDataQoS());
   realtime_motor_command_publisher_ =
