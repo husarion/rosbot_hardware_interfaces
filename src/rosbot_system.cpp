@@ -105,6 +105,8 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring...");
 
+  received_motor_state_msg_ptr_.set(nullptr);
+
   node_ = std::make_shared<rclcpp::Node>("rosbot_system_node");
 
   motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SensorDataQoS());
@@ -152,6 +154,7 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotSystem::on_deactivate(const rclcpp_lifecycle::State&)
 {
+  received_motor_state_msg_ptr_.set(nullptr);
   return CallbackReturn::SUCCESS;
 }
 

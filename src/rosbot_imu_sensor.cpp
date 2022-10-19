@@ -28,6 +28,8 @@ CallbackReturn RosbotImuSensor::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Configuring...");
 
+  received_imu_msg_ptr_.set(nullptr);
+
   node_ = std::make_shared<rclcpp::Node>("imu_sensor_node");
 
   imu_subscriber_ = node_->create_subscription<Imu>("~/imu", rclcpp::SensorDataQoS(),
@@ -69,6 +71,7 @@ CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotImuSensor::on_deactivate(const rclcpp_lifecycle::State&)
 {
+  received_imu_msg_ptr_.set(nullptr);
   return CallbackReturn::SUCCESS;
 }
 
