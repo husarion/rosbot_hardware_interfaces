@@ -12,6 +12,8 @@ namespace rosbot_hardware_interfaces
 {
 CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& hardware_info)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Initializing");
+
   if (hardware_interface::SystemInterface::on_init(hardware_info) != CallbackReturn::SUCCESS)
   {
     return CallbackReturn::ERROR;
@@ -103,7 +105,7 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
 
 CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring...");
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring");
 
   received_motor_state_msg_ptr_.set(nullptr);
 
@@ -117,8 +119,6 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
       node_->create_subscription<JointState>("~/motors_response", rclcpp::SensorDataQoS(),
                                              std::bind(&RosbotSystem::motor_state_cb, this, std::placeholders::_1));
 
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Successfully configured");
-
   executor_.add_node(node_);
   executor_thread_ =
       std::make_unique<std::thread>(std::bind(&rclcpp::executors::MultiThreadedExecutor::spin, &executor_));
@@ -128,12 +128,16 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotSystem::on_cleanup(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Cleaning up");
+
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Activating");
+
   std::shared_ptr<JointState> motor_state;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
@@ -154,18 +158,21 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotSystem::on_deactivate(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Deactivating");
   received_motor_state_msg_ptr_.set(nullptr);
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_shutdown(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Shutting down");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_error(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Handling error");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }

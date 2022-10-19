@@ -11,6 +11,8 @@ namespace rosbot_hardware_interfaces
 {
 CallbackReturn RosbotImuSensor::on_init(const hardware_interface::HardwareInfo& hardware_info)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Initializing");
+
   if (hardware_interface::SensorInterface::on_init(hardware_info) != CallbackReturn::SUCCESS)
   {
     return CallbackReturn::ERROR;
@@ -26,7 +28,7 @@ CallbackReturn RosbotImuSensor::on_init(const hardware_interface::HardwareInfo& 
 
 CallbackReturn RosbotImuSensor::on_configure(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Configuring...");
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Configuring");
 
   received_imu_msg_ptr_.set(nullptr);
 
@@ -39,18 +41,20 @@ CallbackReturn RosbotImuSensor::on_configure(const rclcpp_lifecycle::State&)
   executor_thread_ =
       std::make_unique<std::thread>(std::bind(&rclcpp::executors::MultiThreadedExecutor::spin, &executor_));
 
-  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Successfully configured");
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotImuSensor::on_cleanup(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Cleaning up");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Activating");
+
   std::shared_ptr<Imu> imu_msg;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
@@ -71,18 +75,21 @@ CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotImuSensor::on_deactivate(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Deactivating");
   received_imu_msg_ptr_.set(nullptr);
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotImuSensor::on_shutdown(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Shutting down");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotImuSensor::on_error(const rclcpp_lifecycle::State&)
 {
+  RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Handling error");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
