@@ -100,16 +100,29 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
     }
   }
 
+  node_ = std::make_shared<rclcpp::Node>("rosbot_system_node");
+  executor_.add_node(node_);
+  executor_thread_ =
+      std::make_unique<std::thread>(std::bind(&rclcpp::executors::MultiThreadedExecutor::spin, &executor_));
+
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring");
+  return CallbackReturn::SUCCESS;
+}
 
-  received_motor_state_msg_ptr_.set(nullptr);
+CallbackReturn RosbotSystem::on_cleanup(const rclcpp_lifecycle::State&)
+{
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Cleaning up");
+  return CallbackReturn::SUCCESS;
+}
 
-  node_ = std::make_shared<rclcpp::Node>("rosbot_system_node");
+CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
+{
+  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Activating");
 
   motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SensorDataQoS());
   realtime_motor_command_publisher_ =
@@ -119,29 +132,10 @@ CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
       node_->create_subscription<JointState>("~/motors_response", rclcpp::SensorDataQoS(),
                                              std::bind(&RosbotSystem::motor_state_cb, this, std::placeholders::_1));
 
-  executor_.add_node(node_);
-  executor_thread_ =
-      std::make_unique<std::thread>(std::bind(&rclcpp::executors::MultiThreadedExecutor::spin, &executor_));
-
-  return CallbackReturn::SUCCESS;
-}
-
-CallbackReturn RosbotSystem::on_cleanup(const rclcpp_lifecycle::State&)
-{
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Cleaning up");
-
-  cleanup_node();
-  return CallbackReturn::SUCCESS;
-}
-
-CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
-{
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Activating");
-
   std::shared_ptr<JointState> motor_state;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
+    RCLCPP_WARN(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
     received_motor_state_msg_ptr_.get(motor_state);
     if (motor_state)
     {
@@ -159,6 +153,7 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 CallbackReturn RosbotSystem::on_deactivate(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Deactivating");
+  cleanup_node();
   received_motor_state_msg_ptr_.set(nullptr);
   return CallbackReturn::SUCCESS;
 }
@@ -205,12 +200,9 @@ std::vector<CommandInterface> RosbotSystem::export_command_interfaces()
 
 void RosbotSystem::cleanup_node()
 {
-  executor_thread_.reset();
-  executor_.remove_node(node_);
   motor_state_subscriber_.reset();
   realtime_motor_command_publisher_.reset();
   motor_command_publisher_.reset();
-  node_.reset();
 }
 
 void RosbotSystem::motor_state_cb(const std::shared_ptr<JointState> msg)
@@ -248,7 +240,6 @@ return_type RosbotSystem::read(const rclcpp::Time&, const rclcpp::Duration&)
     RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Position feedback: %f, velocity feedback: %f",
                  pos_state_[motor_state->name[i]], vel_state_[motor_state->name[i]]);
   }
-
   return return_type::OK;
 }
 
