@@ -6,13 +6,13 @@ Rosbots contain [micro-ros](https://micro.ros.org/) firmware which provides the 
 ### Subscribes
 
 - `/cmd_vel` (*geometry_msgs/Twist*, **/rosbot_base_controller**)
-- `/_motors_response` (*sensor_msgs/msg/JointState*, **/hardware_node**)
+- `/_motors_response` (*sensor_msgs/msg/JointState*, **/rosbot_system_node**)
 - `/_imu/data_raw` (*sensor_msgs/msg/Imu*, **/imu_sensor_node**)
 
 ### Publishes
 - `/imu_broadcaster/imu` (*sensor_msgs/Imu*, **/imu_broadcaster**)
 - `/rosbot_base_controller/odom` (*nav_msgs/Odometry*, **/rosbot_base_controller**)
-- `/_motors_cmd` (*std_msgs/msg/Float32MultiArray*, **/hardware_node**)
+- `/_motors_cmd` (*std_msgs/msg/Float32MultiArray*, **/rosbot_system_node**)
 
 # Usage
 1. Add this repository to ros2 workspace

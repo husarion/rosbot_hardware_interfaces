@@ -38,10 +38,19 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State& previous_state) override;
+
+  ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
+
+  ROSBOT_HARDWARE_INTERFACES_PUBLIC
+  CallbackReturn on_shutdown(const rclcpp_lifecycle::State& previous_state) override;
+
+  ROSBOT_HARDWARE_INTERFACES_PUBLIC
+  CallbackReturn on_error(const rclcpp_lifecycle::State& previous_state) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
   std::vector<StateInterface> export_state_interfaces() override;
@@ -50,6 +59,8 @@ public:
   return_type read(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
 protected:
+  void cleanup_node();
+
   realtime_tools::RealtimeBox<std::shared_ptr<Imu>> received_imu_msg_ptr_{ nullptr };
 
   rclcpp::Subscription<Imu>::SharedPtr imu_subscriber_ = nullptr;

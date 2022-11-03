@@ -34,16 +34,13 @@ public:
   RCLCPP_SHARED_PTR_DEFINITIONS(RosbotSystem)
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
-  std::vector<StateInterface> export_state_interfaces() override;
-
-  ROSBOT_HARDWARE_INTERFACES_PUBLIC
-  std::vector<CommandInterface> export_command_interfaces() override;
-
-  ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_init(const hardware_interface::HardwareInfo& hardware_info) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
+
+  ROSBOT_HARDWARE_INTERFACES_PUBLIC
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State& previous_state) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
@@ -52,13 +49,16 @@ public:
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
-  CallbackReturn on_cleanup(const rclcpp_lifecycle::State& previous_state) override;
-
-  ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_shutdown(const rclcpp_lifecycle::State& previous_state) override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
   CallbackReturn on_error(const rclcpp_lifecycle::State& previous_state) override;
+
+  ROSBOT_HARDWARE_INTERFACES_PUBLIC
+  std::vector<StateInterface> export_state_interfaces() override;
+
+  ROSBOT_HARDWARE_INTERFACES_PUBLIC
+  std::vector<CommandInterface> export_command_interfaces() override;
 
   ROSBOT_HARDWARE_INTERFACES_PUBLIC
   return_type read(const rclcpp::Time& time, const rclcpp::Duration& period) override;
@@ -67,6 +67,8 @@ public:
   return_type write(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
 protected:
+  void cleanup_node();
+
   realtime_tools::RealtimeBox<std::shared_ptr<JointState>> received_motor_state_msg_ptr_{ nullptr };
 
   std::shared_ptr<rclcpp::Publisher<Float32MultiArray>> motor_command_publisher_ = nullptr;
