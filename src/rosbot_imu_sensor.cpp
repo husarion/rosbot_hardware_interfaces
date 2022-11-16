@@ -18,7 +18,7 @@ CallbackReturn RosbotImuSensor::on_init(const hardware_interface::HardwareInfo& 
     return CallbackReturn::ERROR;
   }
 
-  imu_sensor_state_.resize(info_.sensors[0].state_interfaces.size(), std::numeric_limits<double>::quiet_NaN());
+  imu_sensor_state_.resize(info_.sensors[0].state_interfaces.size(), 0.0);
 
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
   connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
@@ -46,6 +46,11 @@ CallbackReturn RosbotImuSensor::on_cleanup(const rclcpp_lifecycle::State&)
 CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotImuSensor"), "Activating");
+
+  for (auto i = 0u; i < imu_sensor_state_.size(); i++)
+  {
+    imu_sensor_state_[i] = 0.0;
+  }
 
   imu_subscriber_ = node_->create_subscription<Imu>("~/imu", rclcpp::SensorDataQoS(),
                                                     std::bind(&RosbotImuSensor::imu_cb, this, std::placeholders::_1));

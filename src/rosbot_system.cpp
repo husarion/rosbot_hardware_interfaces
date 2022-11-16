@@ -61,9 +61,9 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
   {
     RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Joint '%s' found", j.name.c_str());
 
-    pos_state_[j.name] = std::numeric_limits<double>::quiet_NaN();
-    vel_state_[j.name] = std::numeric_limits<double>::quiet_NaN();
-    vel_commands_[j.name] = std::numeric_limits<double>::quiet_NaN();
+    pos_state_[j.name] = 0.0;
+    vel_state_[j.name] = 0.0;
+    vel_commands_[j.name] = 0.0;
   }
 
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
@@ -123,6 +123,13 @@ CallbackReturn RosbotSystem::on_cleanup(const rclcpp_lifecycle::State&)
 CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 {
   RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Activating");
+
+  for (const auto& x : pos_state_)
+  {
+    pos_state_[x.first] = 0.0;
+    vel_state_[x.first] = 0.0;
+    vel_commands_[x.first] = 0.0;
+  }
 
   motor_command_publisher_ = node_->create_publisher<Float32MultiArray>("~/motors_cmd", rclcpp::SensorDataQoS());
   realtime_motor_command_publisher_ =
