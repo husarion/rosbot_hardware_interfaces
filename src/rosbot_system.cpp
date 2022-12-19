@@ -68,7 +68,6 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
 
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
   connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
-  wheel_radius_ = std::stod(info_.hardware_parameters["wheel_radius"]);
 
   std::string velocity_command_joint_order_raw = info_.hardware_parameters["velocity_command_joint_order"];
   // remove whitespaces
@@ -242,7 +241,7 @@ return_type RosbotSystem::read(const rclcpp::Time&, const rclcpp::Duration&)
     }
 
     pos_state_[motor_state->name[i]] = motor_state->position[i];
-    vel_state_[motor_state->name[i]] = motor_state->velocity[i] * wheel_radius_;
+    vel_state_[motor_state->name[i]] = motor_state->velocity[i];
 
     RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Position feedback: %f, velocity feedback: %f",
                  pos_state_[motor_state->name[i]], vel_state_[motor_state->name[i]]);
