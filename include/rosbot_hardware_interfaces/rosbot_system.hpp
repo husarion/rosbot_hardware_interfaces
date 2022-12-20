@@ -89,7 +89,6 @@ protected:
   rclcpp::executors::MultiThreadedExecutor executor_;
   std::unique_ptr<std::thread> executor_thread_;
 
-  double wheel_radius_;
   std::vector<std::string> velocity_command_joint_order_;
 
   uint connection_check_period_ms_;
