@@ -1,7 +1,7 @@
 # rosbot_hardware_interfaces
 
-The package uses [ros2_control](https://github.com/ros-controls/ros2_control) to communicate with the Rosbot's 2R, Rosbot's 2 PRO and Rosbot's XL hardware.
-Rosbots contain [micro-ros](https://micro.ros.org/) firmware which provides the encoders and the imu measurements and the motors speed commander.
+The package uses [ros2_control](https://github.com/ros-controls/ros2_control) to communicate with the ROSbot's 2R, ROSbot's 2 PRO and ROSbot's XL hardware.
+ROSbots contain [micro-ros](https://micro.ros.org/) firmware which provides the encoders and the imu measurements and the motors speed commander.
 
 ### Subscribes
 
