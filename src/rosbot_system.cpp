@@ -12,7 +12,7 @@ namespace rosbot_hardware_interfaces
 {
 CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& hardware_info)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Initializing");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Initializing");
 
   if (hardware_interface::SystemInterface::on_init(hardware_info) != CallbackReturn::SUCCESS)
   {
@@ -23,35 +23,35 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
   {
     if (joint.command_interfaces.size() != 1)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' has %zu command interfaces found. 1 expected.",
+      RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint '%s' has %zu command interfaces found. 1 expected.",
                    joint.name.c_str(), joint.command_interfaces.size());
       return CallbackReturn::ERROR;
     }
 
     if (joint.command_interfaces[0].name != hardware_interface::HW_IF_VELOCITY)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' have %s command interfaces found. '%s' expected.",
+      RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint '%s' have %s command interfaces found. '%s' expected.",
                    joint.name.c_str(), joint.command_interfaces[0].name.c_str(), hardware_interface::HW_IF_VELOCITY);
       return CallbackReturn::ERROR;
     }
 
     if (joint.state_interfaces.size() != 2)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' has %zu state interface. 2 expected.",
+      RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint '%s' has %zu state interface. 2 expected.",
                    joint.name.c_str(), joint.state_interfaces.size());
       return CallbackReturn::ERROR;
     }
 
     if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' have '%s' as first state interface. '%s' expected.",
+      RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint '%s' have '%s' as first state interface. '%s' expected.",
                    joint.name.c_str(), joint.state_interfaces[0].name.c_str(), hardware_interface::HW_IF_POSITION);
       return CallbackReturn::ERROR;
     }
 
     if (joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' have '%s' as second state interface. '%s' expected.",
+      RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint '%s' have '%s' as second state interface. '%s' expected.",
                    joint.name.c_str(), joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
       return CallbackReturn::ERROR;
     }
@@ -59,7 +59,7 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
 
   for (auto& j : info_.joints)
   {
-    RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Joint '%s' found", j.name.c_str());
+    RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Joint '%s' found", j.name.c_str());
 
     pos_state_[j.name] = 0.0;
     vel_state_[j.name] = 0.0;
@@ -69,6 +69,7 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
   connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
 
+  std::string tf_prefix = info_.hardware_parameters["tf_prefix"];
   std::string velocity_command_joint_order_raw = info_.hardware_parameters["velocity_command_joint_order"];
   // remove whitespaces
   velocity_command_joint_order_raw.erase(
@@ -79,12 +80,15 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
   std::string joint_name;
   while (getline(velocity_command_joint_order_stream, joint_name, ','))
   {
-    velocity_command_joint_order_.push_back(joint_name);
+    // microros which publishes names of joints does not contain the tf_prefix, that's why
+    // rosbot_system adds it.
+    const auto &joint_name_with_prefix = tf_prefix + joint_name;
+    velocity_command_joint_order_.push_back(joint_name_with_prefix);
   }
 
   if (velocity_command_joint_order_.size() != info_.joints.size())
   {
-    RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint order size is invalid");
+    RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint order size is invalid");
     return CallbackReturn::ERROR;
   }
 
@@ -93,7 +97,7 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
     if (std::find(velocity_command_joint_order_.begin(), velocity_command_joint_order_.end(), j.name) ==
         velocity_command_joint_order_.end())
     {
-      RCLCPP_FATAL(rclcpp::get_logger("RosbotSystem"), "Joint '%s' missing from velocity command joint order",
+      RCLCPP_FATAL(rclcpp::get_logger("rosbot_system"), "Joint '%s' missing from velocity command joint order",
                    j.name.c_str());
       return CallbackReturn::ERROR;
     }
@@ -109,19 +113,19 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
 
 CallbackReturn RosbotSystem::on_configure(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Configuring");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Configuring");
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_cleanup(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Cleaning up");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Cleaning up");
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Activating");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Activating");
 
   for (const auto& x : pos_state_)
   {
@@ -141,7 +145,7 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
   std::shared_ptr<JointState> motor_state;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
-    RCLCPP_WARN(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
+    RCLCPP_WARN(rclcpp::get_logger("rosbot_system"), "Feedback message from motors wasn't received yet");
     received_motor_state_msg_ptr_.get(motor_state);
     if (motor_state)
     {
@@ -158,7 +162,7 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotSystem::on_deactivate(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Deactivating");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Deactivating");
   cleanup_node();
   received_motor_state_msg_ptr_.set(nullptr);
   return CallbackReturn::SUCCESS;
@@ -166,14 +170,14 @@ CallbackReturn RosbotSystem::on_deactivate(const rclcpp_lifecycle::State&)
 
 CallbackReturn RosbotSystem::on_shutdown(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Shutting down");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Shutting down");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn RosbotSystem::on_error(const rclcpp_lifecycle::State&)
 {
-  RCLCPP_INFO(rclcpp::get_logger("RosbotSystem"), "Handling error");
+  RCLCPP_INFO(rclcpp::get_logger("rosbot_system"), "Handling error");
   cleanup_node();
   return CallbackReturn::SUCCESS;
 }
@@ -222,28 +226,20 @@ return_type RosbotSystem::read(const rclcpp::Time&, const rclcpp::Duration&)
   std::shared_ptr<JointState> motor_state;
   received_motor_state_msg_ptr_.get(motor_state);
 
-  RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Reading motors state");
+  RCLCPP_DEBUG(rclcpp::get_logger("rosbot_system"), "Reading motors state");
 
   if (!motor_state)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received");
+    RCLCPP_ERROR(rclcpp::get_logger("rosbot_system"), "Feedback message from motors wasn't received");
     return return_type::ERROR;
   }
 
   for (auto i = 0u; i < motor_state->name.size(); i++)
   {
-    if (pos_state_.find(motor_state->name[i]) == pos_state_.end() ||
-        vel_state_.find(motor_state->name[i]) == vel_state_.end())
-    {
-      RCLCPP_ERROR(rclcpp::get_logger("RosbotSystem"), "Position or velocity feedback not found for joint %s",
-                   motor_state->name[i].c_str());
-      return return_type::ERROR;
-    }
-
     pos_state_[motor_state->name[i]] = motor_state->position[i];
     vel_state_[motor_state->name[i]] = motor_state->velocity[i];
 
-    RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Position feedback: %f, velocity feedback: %f",
+    RCLCPP_DEBUG(rclcpp::get_logger("rosbot_system"), "Position feedback: %f, velocity feedback: %f",
                  pos_state_[motor_state->name[i]], vel_state_[motor_state->name[i]]);
   }
   return return_type::OK;
@@ -256,7 +252,7 @@ return_type RosbotSystem::write(const rclcpp::Time&, const rclcpp::Duration&)
     auto& motor_command = realtime_motor_command_publisher_->msg_;
     motor_command.data.clear();
 
-    RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Wrtiting motors cmd message");
+    RCLCPP_DEBUG(rclcpp::get_logger("rosbot_system"), "Wrtiting motors cmd message");
 
     for (auto const& joint : velocity_command_joint_order_)
     {
