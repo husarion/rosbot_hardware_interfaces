@@ -69,7 +69,7 @@ CallbackReturn RosbotSystem::on_init(const hardware_interface::HardwareInfo& har
   connection_timeout_ms_ = std::stoul(info_.hardware_parameters["connection_timeout_ms"]);
   connection_check_period_ms_ = std::stoul(info_.hardware_parameters["connection_check_period_ms"]);
 
-  std::string tf_prefix = info_.hardware_parameters["tf_prefix"];
+  tf_prefix = info_.hardware_parameters["tf_prefix"];
   std::string velocity_command_joint_order_raw = info_.hardware_parameters["velocity_command_joint_order"];
   // remove whitespaces
   velocity_command_joint_order_raw.erase(
@@ -236,11 +236,13 @@ return_type RosbotSystem::read(const rclcpp::Time&, const rclcpp::Duration&)
 
   for (auto i = 0u; i < motor_state->name.size(); i++)
   {
-    pos_state_[motor_state->name[i]] = motor_state->position[i];
-    vel_state_[motor_state->name[i]] = motor_state->velocity[i];
+    const auto &joint_name_with_prefix = tf_prefix + motor_state->name[i];
+
+    pos_state_[joint_name_with_prefix] = motor_state->position[i];
+    vel_state_[joint_name_with_prefix] = motor_state->velocity[i];
 
     RCLCPP_DEBUG(rclcpp::get_logger("rosbot_system"), "Position feedback: %f, velocity feedback: %f",
-                 pos_state_[motor_state->name[i]], vel_state_[motor_state->name[i]]);
+                 pos_state_[joint_name_with_prefix], vel_state_[joint_name_with_prefix]);
   }
   return return_type::OK;
 }

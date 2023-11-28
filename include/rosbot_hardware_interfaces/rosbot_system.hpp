@@ -91,6 +91,7 @@ protected:
 
   std::vector<std::string> velocity_command_joint_order_;
 
+  std::string tf_prefix;
   uint connection_check_period_ms_;
   uint connection_timeout_ms_;
 };
