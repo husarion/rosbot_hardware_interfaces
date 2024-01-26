@@ -58,7 +58,7 @@ CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
   std::shared_ptr<Imu> imu_msg;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
-    RCLCPP_WARN(rclcpp::get_logger("RosbotImuSensor"), "Feedback message from imu wasn't received yet");
+    RCLCPP_WARN_THROTTLE(rclcpp::get_logger("RosbotImuSensor"), *node_->get_clock(), 5000, "Feedback message from imu wasn't received yet");
     received_imu_msg_ptr_.get(imu_msg);
     if (imu_msg)
     {
