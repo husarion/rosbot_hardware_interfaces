@@ -5,16 +5,15 @@
   <version>1.0.0</version>
   <description>Hardware controller for rosbot 2 and rosbot XL</description>
   <license>Apache License 2.0</license>
-  
+
   <author email="krzysztof.wojciechowski@husarion.com">Krzysztof Wojciechowski</author>
   <author email="maciej.stepien@husarion.com">Maciej Stępień</author>
 
   <maintainer email="maciej.stepien@husarion.com">Maciej Stępień</maintainer>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  
+
   <depend>hardware_interface</depend>
-  <depend>controller_interface</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
