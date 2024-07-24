@@ -13,6 +13,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>ros2_control</depend>
   <depend>hardware_interface</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>rclcpp</depend>
