@@ -141,6 +141,12 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
   std::shared_ptr<JointState> motor_state;
   for (uint wait_time = 0; wait_time <= connection_timeout_ms_; wait_time += connection_check_period_ms_)
   {
+    if (!rclcpp::ok())
+    {
+      RCLCPP_WARN(rclcpp::get_logger("RosbotSystem"), "Shutdown signal received, exiting the loop.");
+      return CallbackReturn::ERROR;
+    }
+
     RCLCPP_WARN(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
     received_motor_state_msg_ptr_.get(motor_state);
     if (motor_state)
