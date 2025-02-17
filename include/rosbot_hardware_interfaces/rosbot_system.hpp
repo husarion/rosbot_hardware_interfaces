@@ -11,9 +11,9 @@
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/handle.hpp"
 
-#include "realtime_tools/realtime_box.h"
-#include "realtime_tools/realtime_buffer.h"
-#include "realtime_tools/realtime_publisher.h"
+#include "realtime_tools/realtime_box.hpp"
+#include "realtime_tools/realtime_buffer.hpp"
+#include "realtime_tools/realtime_publisher.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
