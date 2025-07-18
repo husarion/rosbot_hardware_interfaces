@@ -11,7 +11,7 @@
 #include "hardware_interface/sensor_interface.hpp"
 #include "hardware_interface/handle.hpp"
 
-#include "realtime_tools/realtime_box.hpp"
+#include "realtime_tools/realtime_thread_safe_box.hpp"
 #include "realtime_tools/realtime_buffer.hpp"
 #include "realtime_tools/realtime_publisher.hpp"
 
@@ -61,7 +61,7 @@ public:
 protected:
   void cleanup_node();
 
-  realtime_tools::RealtimeBox<std::shared_ptr<Imu>> received_imu_msg_ptr_{ nullptr };
+  realtime_tools::RealtimeThreadSafeBox<std::shared_ptr<Imu>> received_imu_msg_ptr_{ nullptr };
 
   rclcpp::Subscription<Imu>::SharedPtr imu_subscriber_ = nullptr;
 

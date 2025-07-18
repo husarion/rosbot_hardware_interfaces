@@ -65,7 +65,9 @@ CallbackReturn RosbotImuSensor::on_activate(const rclcpp_lifecycle::State&)
     }
 
     RCLCPP_WARN(rclcpp::get_logger("RosbotImuSensor"), "Feedback message from imu wasn't received yet");
-    received_imu_msg_ptr_.get(imu_msg);
+    received_imu_msg_ptr_.get([&](const auto& msg) {
+      imu_msg = msg;
+    });
     if (imu_msg)
     {
       RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
@@ -121,13 +123,17 @@ void RosbotImuSensor::cleanup_node()
 void RosbotImuSensor::imu_cb(const std::shared_ptr<Imu> msg)
 {
   RCLCPP_DEBUG(node_->get_logger(), "Received imu message");
-  received_imu_msg_ptr_.set(std::move(msg));
+  received_imu_msg_ptr_.set([&](auto & msg_ref) {
+    msg_ref = std::move(msg);
+  });
 }
 
 return_type RosbotImuSensor::read(const rclcpp::Time&, const rclcpp::Duration&)
 {
   std::shared_ptr<Imu> imu_msg;
-  received_imu_msg_ptr_.get(imu_msg);
+  received_imu_msg_ptr_.get([&](const auto& msg) {
+    imu_msg = msg;
+  });
 
   RCLCPP_DEBUG(rclcpp::get_logger("RosbotImuSensor"), "Reading imu state");
 

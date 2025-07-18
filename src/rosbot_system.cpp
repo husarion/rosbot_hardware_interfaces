@@ -148,7 +148,10 @@ CallbackReturn RosbotSystem::on_activate(const rclcpp_lifecycle::State&)
     }
 
     RCLCPP_WARN(rclcpp::get_logger("RosbotSystem"), "Feedback message from motors wasn't received yet");
-    received_motor_state_msg_ptr_.get(motor_state);
+    received_motor_state_msg_ptr_.get([&](const auto& msg) {
+      motor_state = msg;
+    });
+
     if (motor_state)
     {
       RCLCPP_DEBUG(node_->get_logger(), "Subscriber and publisher are now active.");
@@ -220,13 +223,17 @@ void RosbotSystem::cleanup_node()
 void RosbotSystem::motor_state_cb(const std::shared_ptr<JointState> msg)
 {
   RCLCPP_DEBUG(node_->get_logger(), "Received motors response");
-  received_motor_state_msg_ptr_.set(std::move(msg));
+  received_motor_state_msg_ptr_.set([&](auto & msg_ref) {
+    msg_ref = std::move(msg);
+  });
 }
 
 return_type RosbotSystem::read(const rclcpp::Time&, const rclcpp::Duration&)
 {
   std::shared_ptr<JointState> motor_state;
-  received_motor_state_msg_ptr_.get(motor_state);
+  received_motor_state_msg_ptr_.get([&](const auto& msg) {
+    motor_state = msg;
+  });
 
   RCLCPP_DEBUG(rclcpp::get_logger("RosbotSystem"), "Reading motors state");
 

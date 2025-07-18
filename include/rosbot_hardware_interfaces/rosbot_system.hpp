@@ -11,7 +11,7 @@
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/handle.hpp"
 
-#include "realtime_tools/realtime_box.hpp"
+#include "realtime_tools/realtime_thread_safe_box.hpp"
 #include "realtime_tools/realtime_buffer.hpp"
 #include "realtime_tools/realtime_publisher.hpp"
 
@@ -69,7 +69,7 @@ public:
 protected:
   void cleanup_node();
 
-  realtime_tools::RealtimeBox<std::shared_ptr<JointState>> received_motor_state_msg_ptr_{ nullptr };
+  realtime_tools::RealtimeThreadSafeBox<std::shared_ptr<JointState>> received_motor_state_msg_ptr_{ nullptr };
 
   std::shared_ptr<rclcpp::Publisher<Float32MultiArray>> motor_command_publisher_ = nullptr;
 
